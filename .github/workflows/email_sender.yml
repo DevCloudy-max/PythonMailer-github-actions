@@ -7,6 +7,14 @@ on:
 jobs:
     send_email:
         runs-on: ubuntu-latest
+
+
+         
+        permissions:  # 👈 add this block
+          contents: read
+          security-events: write
+
+        
         steps:
             - name: "Check code"
               uses: actions/checkout@v2
