@@ -1,4 +1,4 @@
-name: "CodeQL Advanced"
+name: "CodeQL Secure Analysis"
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "master" ]
   schedule:
-    - cron: '25 20 * * 5'
+    - cron: '25 20 * * 5'  # Every Friday at 8:25 PM UTC
 
 jobs:
   analyze:
@@ -20,37 +20,41 @@ jobs:
       contents: read
 
     steps:
-    - name: Checkout repository
+    - name: 🔄 Checkout repository
       uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
+    - name: 🛡️ Initialize CodeQL (Auto Detect Languages + Extended Queries)
       uses: github/codeql-action/init@v3
       with:
         languages: auto
-        queries: +security-extended
-        # Automatically detect languages in the repo and apply extended security queries
+        queries: +security-extended  # Add extended security queries for better coverage
 
-    - name: Perform CodeQL Analysis
+    - name: 🧠 Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:autodetected"
 
-    # Automatically create GitHub issues for detected vulnerabilities
-    - name: Create Issues for Vulnerabilities
+    - name: 📢 Report Vulnerabilities (Create Issue)
       if: success() && github.event_name == 'push'
       uses: peter-evans/create-issue@v3
       with:
         title: "🔒 Security Vulnerability Detected by CodeQL"
         body: |
-          A vulnerability has been detected by CodeQL scanning.
+          🚨 A vulnerability has been detected by **CodeQL** scanning.
+
+          - **Repository**: `${{ github.repository }}`
+          - **Commit SHA**: `${{ github.sha }}`
+          - **Author**: `${{ github.actor }}`
           
-          **Repository**: `${{ github.repository }}`
-          
-          **Commit**: `${{ github.sha }}`
-          
-          Please review the [Code Scanning Alerts](https://github.com/${{ github.repository }}/security/code-scanning) for details.
+          Please review the [Code Scanning Alerts](https://github.com/${{ github.repository }}/security/code-scanning) for detailed findings and recommended remediations.
 
         labels: |
           security
           urgent
-        assignees: your-github-username  # Replace with your actual GitHub username
+        assignees: your-github-username  # Replace with your GitHub username
+
+    - name: ✅ Add job summary
+      if: always()
+      run: |
+        echo "### ✅ CodeQL scan completed" >> $GITHUB_STEP_SUMMARY
+        echo "- [🔗 View Code Scanning Alerts](https://github.com/${{ github.repository }}/security/code-scanning)" >> $GITHUB_STEP_SUMMARY
