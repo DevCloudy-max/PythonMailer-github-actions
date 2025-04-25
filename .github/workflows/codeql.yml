@@ -10,23 +10,14 @@ on:
 
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+
     permissions:
       security-events: write
       packages: read
       actions: read
       contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - language: actions
-          build-mode: none
-        - language: python
-          build-mode: none
-        # Add other languages as needed here
 
     steps:
     - name: Checkout repository
@@ -35,25 +26,31 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
-        languages: ${{ matrix.language }}
-        build-mode: ${{ matrix.build-mode }}
+        languages: auto
+        queries: +security-extended
+        # Automatically detect languages in the repo and apply extended security queries
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
-        category: "/language:${{matrix.language}}"
+        category: "/language:autodetected"
 
-    # Step to create issues for vulnerabilities (custom action)
+    # Automatically create GitHub issues for detected vulnerabilities
     - name: Create Issues for Vulnerabilities
       if: success() && github.event_name == 'push'
       uses: peter-evans/create-issue@v3
       with:
-        title: "Security Vulnerability Found in CodeQL Scan"
+        title: "🔒 Security Vulnerability Detected by CodeQL"
         body: |
-          A vulnerability was found in the CodeQL scan. Please review the details below:
-          - **Vulnerability Type**: ${{ github.event.head_commit.message }}
-          - **Detected in**: ${{ github.repository }}
-          - **Severity**: High (or auto-detected based on CodeQL results)
+          A vulnerability has been detected by CodeQL scanning.
+          
+          **Repository**: `${{ github.repository }}`
+          
+          **Commit**: `${{ github.sha }}`
+          
+          Please review the [Code Scanning Alerts](https://github.com/${{ github.repository }}/security/code-scanning) for details.
+
         labels: |
-          security, urgent
-        assignees: "your-github-username"
+          security
+          urgent
+        assignees: your-github-username  # Replace with your actual GitHub username
